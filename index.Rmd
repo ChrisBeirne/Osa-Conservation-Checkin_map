@@ -1,0 +1,197 @@
+---
+title: "Osa Conservation: Tracker Checker"
+
+author:
+  - Chris Beirne
+
+site: bookdown::test-bookdown
+output: bookdown::gitbook
+documentclass: book
+biblio-style: apalike
+link-citations: yes
+---
+
+# Tracker status checker
+
+This document summarize the movement locations for all active collars within Osa Conservation's `OC Vultures` project. 
+
+```{r c01, echo=F, message=F, include=F}
+library(rgdal)
+library(move)
+library(dplyr)
+library(leaflet)
+library(units)
+library(sf)
+library(viridis)
+library(kableExtra)
+library(lubridate)
+library(plotly)
+library(googledrive)
+library(googlesheets4)
+library(leaflet.extras)
+
+googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
+googlesheets4::gs4_auth_configure(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
+
+checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
+checkin_locs <- as.data.frame(checkin_locs)
+
+#t <- now("America/Costa_Rica")
+
+t <- ymd_hms("2023-10-12 12:00:00")
+# Import passcodes
+MOVE_PASS <- Sys.getenv("MOVEBANK_PASSWORD")
+MOVE_USE <- Sys.getenv("MOVEBANK_USERNAME")
+
+loginStored <- movebankLogin(username=MOVE_USE, 
+                             password=MOVE_PASS)
+
+# Get animals
+animals <-getMovebankAnimals(study=1573471517,login=loginStored)
+# For some reason they are duplicated
+animals[duplicated(animals)==F,]
+# They vary by the field "sensor_type_id"
+animals <- animals[animals$sensor_type_id==653,]
+
+#dat$local_identifier
+# Get all the data
+dat <- getMovebankData(study=1573471517, login=loginStored,  removeDuplicatedTimestamps=TRUE, 
+                       timestamp_start=t)
+
+dat$timestamp <- with_tz(timestamps(dat), tz="America/Costa_Rica")
+
+# Convert move stack to dataframe
+dat <- as.data.frame(dat)
+
+recent_dat <- dat %>% 
+  group_by(local_identifier) %>%
+  slice(which.max(timestamp))
+recent_dat <- data.frame(recent_dat)
+#str(recent_dat)
+
+# Remove Empty rows cocking everything up
+recent_dat <- recent_dat[, c("local_identifier", "timestamp","location_lat", "location_long", "eobs_horizontal_accuracy_estimate", "gps_dop", "gps_satellite_count")]
+#write.table(recent_dat[1,], "clipboard", sep="\t", row.names=FALSE)
+
+# First run only
+#sheet_append("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8", recent_dat)
+#checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
+#checkin_locs <- as.data.frame(checkin_locs)
+#
+checkin_locs$timestamp <- with_tz(checkin_locs$timestamp, tz="America/Costa_Rica")
+
+tmp <- recent_dat
+tmp$timestamp <- substr(tmp$timestamp,1,17) 
+checkin_locs$timestamp <- substr(checkin_locs$timestamp,1,17) 
+
+
+recent_dat$exists <- do.call(paste0, tmp) %in% do.call(paste0, checkin_locs)
+tmp <- recent_dat[recent_dat$exists==FALSE,]
+
+tmp$exists <-NULL
+
+sheet_append("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8", tmp)
+```
+
+## Costa Rica check-in Map
+
+```{r}
+# Get missed locations
+checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
+checkin_locs <- as.data.frame(checkin_locs)
+checkin_locs$timestamp <- with_tz(checkin_locs$timestamp, tz="America/Costa_Rica")
+
+# Add a country column
+checkin_locs$country <- checkin_locs$location_lat<0
+checkin_locs$country[checkin_locs$country==T] <- "peru"
+checkin_locs$country[checkin_locs$country==F] <- "costa_rica"
+#table(checkin_locs$country)
+
+# Add a country column
+dat$country <- dat$location_lat<0
+dat$country[dat$country==T] <- "peru"
+dat$country[dat$country==F] <- "costa_rica"
+
+```
+
+```{r  c02, include=F}
+# Costa rica
+
+# Convert to shapefiles
+dat <- dat[order(dat$local_identifier),]
+
+
+lfc <- do.call(st_sfc,
+              lapply(split(dat, dat$local_identifier),
+                     function(d){st_linestring(as.matrix(d[,c("location_long", "location_lat")]))}))
+dat_shp <- st_sf(data.frame(local_identifier=levels(factor(dat[,"local_identifier"])), geom=lfc))
+
+#
+#plot(dat$location_long[dat$country=="costa_rica"], dat$location_lat[dat$country=="costa_rica"])
+#plot(st_geometry(dat_shp), add=T)
+
+sp_dat <- dat[,c("local_identifier",    "country", "taxon_canonical_name" )]
+sp_dat <- sp_dat[duplicated(sp_dat)==F,]
+
+# add back in the metadata
+dat_shp  <- left_join(dat_shp,sp_dat)
+
+
+tmp_cr <- dat[dat$country=="costa_rica",]
+tmp_cr_shp <- dat_shp[dat_shp$country=="costa_rica",]
+
+
+# First lets choose a category to colour
+tmp_cr[,"local_identifier"] <- factor(tmp_cr[,"local_identifier"])
+tmp_cr_shp$local_identifier <- factor(tmp_cr_shp$local_identifier)
+
+col.cat <- turbo(length(levels(tmp_cr[,"local_identifier"])))
+# Add it to the dataframe
+tmp_cr$colours <- col.cat[tmp_cr[,"local_identifier"]]
+tmp_cr_shp$colours <- col.cat[tmp_cr_shp$local_identifier]
+
+```
+
+
+```{r}
+# New map
+ids <- tmp_cr_shp$local_identifier
+local_identifiers <- sub('\\_.*', '', tmp_cr_shp$local_identifier)
+i <- 24
+m <- leaflet() %>%
+  # Add a satellite image layer
+  addProviderTiles(providers$CartoDB.PositronNoLabels, group="Simple") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group="Satellite") %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group="OS") #%>%     
+
+  for (i in seq(along=ids))
+    {
+      m <- m %>%
+        addPolylines(data = tmp_cr_shp[i,], color = tmp_cr_shp$colours[i], group = ids[i], weight=2,opacity=0.3)  %>%
+        addCircleMarkers(lng=checkin_locs$location_long[checkin_locs$local_identifier==ids[i]],
+                         lat=checkin_locs$location_lat[checkin_locs$local_identifier==ids[i]], 
+                         popup=paste(checkin_locs$timestamp[checkin_locs$local_identifier==ids[i]]),
+                         fillOpacity = 1, opacity = 1, radius=3, color = "red", group = ids[i], stroke=F)
+    }
+
+  m <- m %>%
+      #addLegend(position= "topright", colors=tmp_cr_shp$colours, 
+       #         labels=local_identifiers ,opacity = 0.7, title = "Animals") %>%
+      addScaleBar(position="topleft", 
+                  options=scaleBarOptions(maxWidth = 100, metric = TRUE, imperial = FALSE, updateWhenIdle = TRUE)) %>%
+      addLayersControl(
+        baseGroups = c("OS", "Simple", "Satellite"),
+        overlayGroups = ids,
+        options = layersControlOptions(collapsed = FALSE)
+      ) %>%
+  addFullscreenControl()
+  
+m 
+```
+
+## Costa Rica check-in timeline
+
+
+
+
+
