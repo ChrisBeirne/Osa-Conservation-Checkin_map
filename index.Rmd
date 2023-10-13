@@ -77,7 +77,7 @@ recent_dat <- recent_dat[, c("local_identifier", "timestamp","location_lat", "lo
 #sheet_append("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8", recent_dat)
 #checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
 #checkin_locs <- as.data.frame(checkin_locs)
-#
+# 
 checkin_locs$timestamp <- with_tz(checkin_locs$timestamp, tz="America/Costa_Rica")
 
 tmp <- recent_dat
