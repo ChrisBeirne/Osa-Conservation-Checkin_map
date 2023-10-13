@@ -55,7 +55,7 @@ animals <- animals[animals$sensor_type_id==653,]
 # Get all the data
 dat <- getMovebankData(study=1573471517, login=loginStored,  removeDuplicatedTimestamps=TRUE, 
                        timestamp_start=t)
-
+#
 dat$timestamp <- with_tz(timestamps(dat), tz="America/Costa_Rica")
 
 # Convert move stack to dataframe
