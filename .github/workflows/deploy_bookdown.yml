@@ -2,7 +2,7 @@ name: scheduleRenderbook
 on:     
   push:
   schedule:     
-     - cron: "40 * * * *" 
+     - cron: "10 * * * *"  
 
 
 jobs:
@@ -22,8 +22,8 @@ jobs:
           TINYTEX_INSTALLER: TinyTeX
       - name: Install rmarkdown
         run: Rscript -e 'install.packages(c("rmarkdown","bookdown"))'
-      - name: Install rgdal
-        run: Rscript -e "install.packages('rgdal', type='mac.binary')"  
+#      - name: Install rgdal
+#        run: Rscript -e "install.packages('rgdal', type='mac.binary')"  
       - name: Install units
         run: Rscript -e "install.packages('units')"
       - name: Install leaflet
@@ -46,11 +46,19 @@ jobs:
         run: Rscript -e "install.packages('raster', type='mac.binary')"
       - name: Install googledrive
         run: Rscript -e "install.packages('googledrive')"
-      - name: Install googlesheets4
-        run: Rscript -e "install.packages('googlesheets4')"
+      - name: Install purrr
+        run: Rscript -e "install.packages('purrr')"
+      - name: Install readxl
+        run: Rscript -e "install.packages('readxl')"
+      - name: Install geosphere
+        run: Rscript -e "install.packages('geosphere')"
+      - name: Install foreach
+        run: Rscript -e "install.packages('foreach')"
+      - name: Install maptools
+        run: Rscript -e "install.packages('maptools')"
       - name: Install leaflet.extras
         run: Rscript -e "install.packages('leaflet.extras')"
-     - name: Render Book
+      - name: Render Book
         env: 
           GOOGLE_AUTHENTICATION_CREDENTIALS: ${{ secrets.GOOGLE_AUTHENTICATION_CREDENTIALS }}
           MOVEBANK_USERNAME: ${{ secrets.MOVEBANK_USERNAME }}
