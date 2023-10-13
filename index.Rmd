@@ -29,7 +29,7 @@ library(googlesheets4)
 library(leaflet.extras)
 
 googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
-googlesheets4::gs4_auth_configure(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
+googlesheets4::gs4_auth(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
 
 checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
 checkin_locs <- as.data.frame(checkin_locs)
