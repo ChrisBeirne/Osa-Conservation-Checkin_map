@@ -10,6 +10,11 @@ jobs:
     name: Render-Book
     runs-on:   macos-11 # macos-latest # ubuntu-latest #  macos USES 10 TIMES THE MINUTES
     steps:
+      - name: Google auth
+        uses: 'google-github-actions/auth@v0'
+        with: 
+          workload_identity_provider: '${{ secrets.WIF_PROVIDER }}'
+          service_account: '${{ secrets.SA_EMAIL }}'
       - uses: actions/checkout@v2
       # More detail here, https://github.com/r-lib/actions
       # It's possible to define R and pandoc version if desired
@@ -62,7 +67,7 @@ jobs:
         run: Rscript -e "install.packages('leaflet.extras')"
       - name: Render Book
         env: 
-          GOOGLE_AUTHENTICATION_CREDENTIALS: ${{ secrets.GOOGLE_AUTHENTICATION_CREDENTIALS }}
+#          GOOGLE_AUTHENTICATION_CREDENTIALS: ${{ secrets.GOOGLE_AUTHENTICATION_CREDENTIALS }}
           MOVEBANK_USERNAME: ${{ secrets.MOVEBANK_USERNAME }}
           MOVEBANK_PASSWORD: ${{ secrets.MOVEBANK_PASSWORD }}
         run: Rscript -e 'bookdown::render_book("index.Rmd")'
