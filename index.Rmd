@@ -33,7 +33,7 @@ googlesheets4::gs4_auth(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
 
 checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
 checkin_locs <- as.data.frame(checkin_locs)
-
+#
 #t <- now("America/Costa_Rica")
 
 t <- ymd_hms("2023-10-12 12:00:00")
