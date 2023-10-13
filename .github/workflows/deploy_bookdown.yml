@@ -2,8 +2,7 @@ name: scheduleRenderbook
 on:     
   push:
   schedule:     
-     - cron: "0 13 * * 1"   # Every monday at 13:00
-
+     - cron: "40 * * * *" 
 
 
 jobs:
@@ -45,8 +44,15 @@ jobs:
         run: Rscript -e "install.packages('plotly')"
       - name: Install raster
         run: Rscript -e "install.packages('raster', type='mac.binary')"
+      - name: Install googledrive
+        run: Rscript -e "install.packages('googledrive')"
+      - name: Install googlesheets4
+        run: Rscript -e "install.packages('googlesheets4')"
+      - name: Install leaflet.extras
+        run: Rscript -e "install.packages('leaflet.extras')"
       - name: Render Book
         env: 
+          GOOGLE_AUTHENTICATION_CREDENTIALS: ${{ secrets.GOOGLE_AUTHENTICATION_CREDENTIALS }}
           MOVEBANK_USERNAME: ${{ secrets.MOVEBANK_USERNAME }}
           MOVEBANK_PASSWORD: ${{ secrets.MOVEBANK_PASSWORD }}
         run: Rscript -e 'bookdown::render_book("index.Rmd")'
