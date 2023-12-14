@@ -37,6 +37,7 @@ checkin_locs <- as.data.frame(checkin_locs)
 #t <- now("America/Costa_Rica")
 
 t <- ymd_hms("2023-10-12 12:00:00")
+
 # Import passcodes
 MOVE_PASS <- Sys.getenv("MOVEBANK_PASSWORD")
 MOVE_USE <- Sys.getenv("MOVEBANK_USERNAME")
