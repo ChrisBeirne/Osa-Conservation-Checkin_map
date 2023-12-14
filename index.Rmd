@@ -91,9 +91,9 @@ tmp$exists <-NULL
 sheet_append("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8", tmp)
 ```
 
-## Costa Rica check-in Map
+### Costa Rica check-in Map
 
-```{r}
+```{r, echo=F, message=F, include=F}
 # Get missed locations
 checkin_locs <- read_sheet("1pPsmKoMSDJI7_BVVQAlT6ZrHROXSe0tZRxvn0RIOQK8")
 checkin_locs <- as.data.frame(checkin_locs)
@@ -112,7 +112,7 @@ dat$country[dat$country==F] <- "costa_rica"
 
 ```
 
-```{r  c02, include=F}
+```{r  c02, include=F,echo=F, message=F, include=F}
 # Costa rica
 
 # Convert to shapefiles
@@ -151,7 +151,7 @@ tmp_cr_shp$colours <- col.cat[tmp_cr_shp$local_identifier]
 ```
 
 
-```{r}
+```{r, echo=F, message=F, include=F}
 # New map
 ids <- tmp_cr_shp$local_identifier
 local_identifiers <- sub('\\_.*', '', tmp_cr_shp$local_identifier)
@@ -187,9 +187,61 @@ m <- leaflet() %>%
 m 
 ```
 
-## Costa Rica check-in timeline
+### Peru check-in map
 
 
+```{r, echo=F, message=F, include=F}
 
+tmp_pe <- dat[dat$country=="peru",]
+tmp_pe_shp <- dat_shp[dat_shp$country=="peru",]
+
+
+# First lets choose a category to colour
+tmp_pe[,"local_identifier"] <- factor(tmp_pe[,"local_identifier"])
+tmp_pe_shp$local_identifier <- factor(tmp_pe_shp$local_identifier)
+
+col.cat <- turbo(length(levels(tmp_pe[,"local_identifier"])))
+# Add it to the dataframe
+tmp_pe$colours <- col.cat[tmp_pe[,"local_identifier"]]
+tmp_pe_shp$colours <- col.cat[tmp_pe_shp$local_identifier]
+
+```
+
+
+```{r, echo=F, message=F, include=F}
+# New map
+ids <- tmp_pe_shp$local_identifier
+local_identifiers <- sub('\\_.*', '', tmp_pe_shp$local_identifier)
+i <- 24
+m <- leaflet() %>%
+  # Add a satellite image layer
+  addProviderTiles(providers$CartoDB.PositronNoLabels, group="Simple") %>%
+  addProviderTiles(providers$Esri.WorldImagery, group="Satellite") %>%
+  addProviderTiles(providers$OpenStreetMap.Mapnik, group="OS") #%>%     
+
+  for (i in seq(along=ids))
+    {
+      m <- m %>%
+        addPolylines(data = tmp_pe_shp[i,], color = tmp_pe_shp$colours[i], group = ids[i], weight=2,opacity=0.3)  %>%
+        addCircleMarkers(lng=checkin_locs$location_long[checkin_locs$local_identifier==ids[i]],
+                         lat=checkin_locs$location_lat[checkin_locs$local_identifier==ids[i]], 
+                         popup=paste(checkin_locs$timestamp[checkin_locs$local_identifier==ids[i]]),
+                         fillOpacity = 1, opacity = 1, radius=3, color = "red", group = ids[i], stroke=F)
+    }
+
+  m <- m %>%
+      #addLegend(position= "topright", colors=tmp_pe_shp$colours, 
+       #         labels=local_identifiers ,opacity = 0.7, title = "Animals") %>%
+      addScaleBar(position="topleft", 
+                  options=scaleBarOptions(maxWidth = 100, metric = TRUE, imperial = FALSE, updateWhenIdle = TRUE)) %>%
+      addLayersControl(
+        baseGroups = c("OS", "Simple", "Satellite"),
+        overlayGroups = ids,
+        options = layersControlOptions(collapsed = FALSE)
+      ) %>%
+  addFullscreenControl()
+  
+m 
+```
 
 
