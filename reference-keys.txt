@@ -1,3 +1,3 @@
 tracker-status-checker
 costa-rica-check-in-map
-costa-rica-check-in-timeline
+peru-check-in-map
