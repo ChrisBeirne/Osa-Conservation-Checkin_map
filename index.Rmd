@@ -152,7 +152,7 @@ tmp_cr_shp$colours <- col.cat[tmp_cr_shp$local_identifier]
 ```
 
 
-```{r, echo=F, message=F, include=F}
+```{r, echo=F, message=F}
 # New map
 ids <- tmp_cr_shp$local_identifier
 local_identifiers <- sub('\\_.*', '', tmp_cr_shp$local_identifier)
@@ -209,7 +209,7 @@ tmp_pe_shp$colours <- col.cat[tmp_pe_shp$local_identifier]
 ```
 
 
-```{r, echo=F, message=F, include=F}
+```{r, echo=F, message=F}
 # New map
 ids <- tmp_pe_shp$local_identifier
 local_identifiers <- sub('\\_.*', '', tmp_pe_shp$local_identifier)
