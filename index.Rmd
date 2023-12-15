@@ -27,7 +27,7 @@ library(plotly)
 library(googledrive)
 library(googlesheets4)
 library(leaflet.extras)
-#
+# 
 googledrive::drive_auth(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
 googlesheets4::gs4_auth(path = Sys.getenv("GOOGLE_AUTHENTICATION_CREDENTIALS"))
 
